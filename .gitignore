@@ -1,0 +1,32 @@
+# Dependências / pacotes
+node_modules/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# SO / Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Builds / cache
+.dist/
+dist/
+build/
+coverage/
+.cache/
+
+# Sistemas Python (caso use servidor futuro)
+__pycache__/
+*.pyc
+
+# Backups
+*.bak
+*.tmp
+
+# Arquivos de sistema OneDrive/Windows
+~$*

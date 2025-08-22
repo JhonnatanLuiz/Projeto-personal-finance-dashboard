@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Finanças Pessoais</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <!-- Font Awesome para ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css">
+    <!-- Seu CSS customizado -->
+    <link rel="stylesheet" href="dashboard_style.css">
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark shadow-sm">
+        <div class="container-fluid d-flex justify-content-between align-items-center">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-chart-line me-2"></i>
+                Meu Painel Financeiro
+            </a>
+            <div class="d-flex align-items-center gap-2">
+                <button id="theme-toggle-btn" class="btn btn-sm btn-outline-light" title="Alternar tema"><i class="fas fa-moon" id="theme-toggle-icon"></i></button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-4">
+                <header class="mb-4">
+                    <div class="d-flex flex-wrap align-items-center gap-3 justify-content-between">
+                        <h1 class="h2 mb-0">Visão Geral</h1>
+                        <div class="btn-group" role="group" aria-label="Ações do painel">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTransactionModal">
+                    <i class="fas fa-plus me-1"></i> Nova Transação
+                </button>
+                <button type="button" id="export-btn" class="btn btn-outline-secondary" title="Exportar transações">
+                    <i class="fas fa-download"></i>
+                </button>
+                <button type="button" id="export-csv-btn" class="btn btn-outline-secondary" title="Exportar transações (CSV)">
+                    <i class="fas fa-file-csv"></i>
+                </button>
+                <button type="button" id="import-btn" class="btn btn-outline-secondary" title="Importar transações">
+                    <i class="fas fa-upload"></i>
+                </button>
+                <button type="button" id="clear-btn" class="btn btn-outline-danger" title="Limpar todos os dados">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#filtersCollapse" aria-expanded="false" aria-controls="filtersCollapse" aria-label="Mostrar filtros">
+                            <i class="fas fa-filter"></i> Filtros
+                        </button>
+                    </div>
+                    <input type="file" id="import-file" accept="application/json" style="display:none">
+                    <div id="filtersCollapse" class="collapse d-lg-block mt-3">
+                        <div class="d-flex flex-wrap align-items-end gap-2">
+                                <div class="d-flex flex-column">
+                                    <label for="filter-month" class="small text-muted">Mês</label>
+                                    <select id="filter-month" class="form-select form-select-sm" style="width:120px">
+                                            <option value="all">Todos</option>
+                                    </select>
+                                </div>
+                                <div class="d-flex flex-column">
+                                    <label for="filter-year" class="small text-muted">Ano</label>
+                                    <select id="filter-year" class="form-select form-select-sm" style="width:110px">
+                                            <option value="all">Todos</option>
+                                    </select>
+                                </div>
+                                <div class="d-flex gap-2 ms-auto ms-lg-0">
+                                    <button id="apply-filter" class="btn btn-sm btn-outline-primary">Filtrar</button>
+                                    <button id="reset-filter" class="btn btn-sm btn-outline-secondary">Reset</button>
+                                </div>
+                        </div>
+                    </div>
+        </header>
+
+        <!-- Cards de resumo -->
+         <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="card summary-card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Balanço Atual</h5>
+                        <p id="balance" class="card-text">R$ 0,00</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card summary-card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Total de Receitas</h5>
+                        <p id="total-income" class="card-text text-success">R$ 0,00</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card summary-card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Total de Despesas</h5>
+                        <p id="total-expense" class="card-text text-danger">R$ 0,00</p>
+                    </div>
+                </div>
+             </div>
+        </div>
+
+        <!--Gráfico e Tabela de Transações-->
+        <div class="row g-4">
+            <div class="col-lg-5">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Despesas por Categorias</h5>
+                        <div class="d-flex flex-wrap gap-2 align-items-center ms-auto">
+                            <select id="expense-palette-select" class="form-select form-select-sm w-auto" title="Paleta de cores">
+                                <option value="default">Paleta: Padrão</option>
+                                <option value="pastel">Paleta: Pastel</option>
+                                <option value="vibrant">Paleta: Vibrante</option>
+                                <option value="mono">Paleta: Monocromática</option>
+                            </select>
+                            <select id="expense-chart-type" class="form-select form-select-sm w-auto" title="Tipo de gráfico">
+                                <option value="doughnut">Rosca</option>
+                                <option value="pie">Pizza</option>
+                                <option value="bar">Barras</option>
+                                <option value="polarArea">Polar</option>
+                                <option value="radar">Radar</option>
+                            </select>
+                            <button id="expense-chart-download" class="btn btn-sm btn-outline-secondary" title="Baixar imagem"><i class="fas fa-download"></i></button>
+                        </div>
+                    </div>
+                    <div class="card-body d-flex justify-content-center align-items-center">
+                        <div id="chart-container">
+                            <canvas id="expense-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-7">
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Histórico de Transação</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover transaction-table mb-0">
+                                <thead>
+                                    <tr>
+                                                <th>Descrição</th>
+                                                <th>Data</th>
+                                                <th>Valor</th>
+                                        <th>Tipo</th>
+                                        <th>Categoria</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="transaction-list">
+                                    <!--Linhas da Tabela serão inseridas aqui-->
+                                    </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráfico de Tendência Mensal -->
+        <div class="row g-4 mt-1">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                        <h5 class="card-title mb-0">Evolução Mensal (Receitas vs Despesas)</h5>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <select id="trend-chart-type" class="form-select form-select-sm w-auto" title="Tipo de gráfico">
+                                <option value="line">Linha</option>
+                                <option value="bar">Barras</option>
+                                <option value="stackedBar">Barras Empilhadas</option>
+                                <option value="stackedArea">Área Empilhada</option>
+                            </select>
+                            <button id="trend-chart-download" class="btn btn-sm btn-outline-secondary" title="Baixar imagem"><i class="fas fa-download"></i></button>
+                            <small class="text-muted" id="monthly-trend-range"></small>
+                        </div>
+                    </div>
+                    <div class="card-body trend-chart-wrapper">
+                        <canvas id="monthly-trend-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--Modal para Adicionar Nova Transação-->
+    <div class="modal fade" id="addTransactionModal" tabindex="-1" aria-labelledby="addTransactionModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addTransactionModalLabel">Nova Transação</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="transaction-form" class="needs-validation" novalidate>
+                        <input type="hidden" id="transaction-id">
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Descrição</label>
+                <input type="text" class="form-control" id="description" maxlength="100" required>
+                <div class="invalid-feedback">Por favor, insira uma descrição (máx. 100 caracteres).</div>
+                        </div>
+                        <div class="mb-3">
+                <label for="amount" class="form-label">Valor</label>
+                <input type="number" class="form-control" id="amount" step="0.01" placeholder="0,00" min="0.01" required>
+                <div class="invalid-feedback">Por favor, insira um valor maior que zero.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="type" class="form-label">Tipo</label>
+                            <select class="form-select" id="type" required>
+                                <option value="income">Receita</option>
+                                <option value="expense">Despesa</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="date" class="form-label">Data</label>
+                            <input type="date" class="form-control" id="date" required>
+                            <div class="invalid-feedback">Por favor, informe a data da transação.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="category" class="form-label">Categoria</label>
+                            <select class="form-select" id="category" required>
+                                <option value="Alimentação">Alimentação</option>
+                                <option value="Transporte">Transporte</option>
+                                <option value="Lazer">Lazer</option>
+                                <option value="Moradia">Moradia</option>
+                                <option value="Salário">Salário</option>
+                                <option value="Outros">Outros</option>
+                            </select>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Salvar Transação</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de confirmação para limpar dados -->
+    <div class="modal fade" id="confirmClearModal" tabindex="-1" aria-labelledby="confirmClearModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmClearModalLabel">Confirmar</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Tem certeza que deseja apagar todas as transações? Esta ação não pode ser desfeita.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" id="confirm-clear-btn" class="btn btn-danger">Apagar tudo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Editar Transação (separado) -->
+    <div class="modal fade" id="editTransactionModal" tabindex="-1" aria-labelledby="editTransactionModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editTransactionModalLabel">Editar Transação</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="edit-transaction-form" class="needs-validation" novalidate>
+                        <input type="hidden" id="edit-transaction-id">
+                        <div class="mb-3">
+                            <label for="edit-description" class="form-label">Descrição</label>
+                            <input type="text" class="form-control" id="edit-description" maxlength="100" required>
+                            <div class="invalid-feedback">Por favor, insira uma descrição (máx. 100 caracteres).</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-amount" class="form-label">Valor</label>
+                            <input type="number" class="form-control" id="edit-amount" step="0.01" placeholder="0,00" min="0.01" required>
+                            <div class="invalid-feedback">Por favor, insira um valor maior que zero.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-type" class="form-label">Tipo</label>
+                            <select class="form-select" id="edit-type" required>
+                                <option value="income">Receita</option>
+                                <option value="expense">Despesa</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-date" class="form-label">Data</label>
+                            <input type="date" class="form-control" id="edit-date" required>
+                            <div class="invalid-feedback">Por favor, informe a data da transação.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-category" class="form-label">Categoria</label>
+                            <select class="form-select" id="edit-category" required>
+                                <option value="Alimentação">Alimentação</option>
+                                <option value="Transporte">Transporte</option>
+                                <option value="Lazer">Lazer</option>
+                                <option value="Moradia">Moradia</option>
+                                <option value="Salário">Salário</option>
+                                <option value="Outros">Outros</option>
+                            </select>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle com Popper -->
+     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Toast container -->
+    <div id="toast-container" class="position-fixed top-0 end-0 p-3" style="z-index:1080"></div>
+    <!-- Seu Script -->
+    <script src="dashboard_script.js"></script>
+</body>
+</html>
